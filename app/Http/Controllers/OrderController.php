@@ -34,6 +34,10 @@ class OrderController extends Controller
 
     public function checkout()
     {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول لإتمام الطلب');
+        }
+        
         $cart = Session::get('cart', []);
         
         if (empty($cart)) {
@@ -64,6 +68,10 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول لإتمام الطلب');
+        }
+        
         $request->validate([
             'address' => 'required|string|min:10',
             'notes' => 'nullable|string|max:500',
