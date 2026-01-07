@@ -13,14 +13,6 @@ return new class extends Migration
     {
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->string('title_ar')->nullable();
-            $table->text('description')->nullable();
-            $table->text('description_ar')->nullable();
-            $table->string('image_url')->nullable();
-            $table->decimal('original_price', 10, 2)->nullable();
-            $table->decimal('offer_price', 10, 2);
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

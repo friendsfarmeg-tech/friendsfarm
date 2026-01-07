@@ -22,10 +22,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Pagination\Paginator::useBootstrapFive();
 
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
-            $settings = \Illuminate\Support\Facades\Cache::remember('site_settings', 3600, function () {
-                return \App\Models\Setting::pluck('value', 'key')->all();
-            });
-            $view->with('settings', $settings);
+            $view->with('settings', \App\Models\Setting::pluck('value', 'key')->all());
         });
     }
 }

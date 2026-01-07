@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->string('user_name')->nullable(); // For guest/manual reviews
-            $table->tinyInteger('rating')->unsigned()->default(5);
-            $table->text('comment')->nullable();
-            $table->boolean('is_visible')->default(true);
+            $table->foreignUuid('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignUuid('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('customer_name'); // For admin-added reviews
+            $table->string('customer_email')->nullable();
+            $table->integer('rating')->default(5); // 1-5 stars
+            $table->text('comment');
+            $table->boolean('is_approved')->default(true);
+            $table->boolean('is_admin_added')->default(false); // Admin can add reviews
             $table->timestamps();
         });
     }

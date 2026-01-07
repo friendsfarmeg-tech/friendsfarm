@@ -17,9 +17,7 @@ class ProductController extends Controller
         }
 
         $products = $query->latest()->paginate(12);
-        $categories = \Illuminate\Support\Facades\Cache::remember('categories_all', 3600, function () {
-            return Category::all();
-        });
+        $categories = Category::all();
 
         return view('products.index', compact('products', 'categories'));
     }

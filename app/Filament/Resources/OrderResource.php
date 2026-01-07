@@ -23,36 +23,26 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Details')
-                    ->schema([
-                        Forms\Components\Grid::make(['default' => 1, 'lg' => 2])
-                            ->schema([
-                                Forms\Components\Select::make('status')
-                                    ->options([
-                                        'pending' => 'جديد',
-                                        'confirmed' => 'مؤكد',
-                                        'preparing' => 'جاري التجهيز',
-                                        'delivered' => 'تم التوصيل',
-                                        'cancelled' => 'ملغي',
-                                    ])
-                                    ->required()
-                                    ->label('الحالة'),
-                                Forms\Components\TextInput::make('total')
-                                    ->numeric()
-                                    ->required()
-                                    ->disabled()
-                                    ->label('الإجمالي'),
-                            ]),
-                    ]),
-                    
-                Forms\Components\Section::make('Customer & Shipping')
-                    ->schema([
-                        Forms\Components\Textarea::make('address')
-                            ->required()
-                            ->label('العنوان'),
-                        Forms\Components\Textarea::make('notes')
-                            ->label('ملاحظات'),
-                    ]),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'جديد',
+                        'confirmed' => 'مؤكد',
+                        'preparing' => 'جاري التجهيز',
+                        'delivered' => 'تم التوصيل',
+                        'cancelled' => 'ملغي',
+                    ])
+                    ->required()
+                    ->label('الحالة'),
+                Forms\Components\TextInput::make('total')
+                    ->numeric()
+                    ->required()
+                    ->disabled()
+                    ->label('الإجمالي'),
+                Forms\Components\Textarea::make('address')
+                    ->required()
+                    ->label('العنوان'),
+                Forms\Components\Textarea::make('notes')
+                    ->label('ملاحظات'),
             ]);
     }
 
@@ -63,8 +53,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('رقم الطلب')
                     ->searchable()
-                    ->formatStateUsing(fn ($state) => '#' . substr($state, 0, 8))
-                    ->copyable(),
+                    ->formatStateUsing(fn ($state) => '#' . substr($state, 0, 8)),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('العميل')
                     ->sortable()
@@ -83,29 +72,15 @@ class OrderResource extends Resource
                     ])
                     ->label('الحالة')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('address')
-                    ->label('العنوان')
-                    ->wrap()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->label('تاريخ الطلب')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'جديد',
-                        'confirmed' => 'مؤكد',
-                        'preparing' => 'جاري التجهيز',
-                        'delivered' => 'تم التوصيل',
-                        'cancelled' => 'ملغي',
-                    ])
-                    ->label('الحالة'),
+                //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

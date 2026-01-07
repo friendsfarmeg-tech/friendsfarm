@@ -4,63 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Auth::user()->orders()->latest()->paginate(10);
+        $orders = Order::where('user_id', Auth::id())
+            ->with('items.product')
+            ->latest()
+            ->paginate(10);
+
         return view('orders.index', compact('orders'));
-    }
-
-    public function store(Request $request)
-    {
-        $cart = session()->get('cart', []);
-        if (empty($cart)) {
-            return redirect()->back()->with('error', __('Your cart is empty!'));
-        }
-
-        $request->validate([
-            'address' => 'required|string',
-        ]);
-
-        $total = 0;
-        foreach ($cart as $details) {
-            $total += $details['price'] * $details['quantity'];
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'total' => $total,
-                'status' => 'pending',
-                'address' => $request->address,
-                'notes' => $request->notes,
-            ]);
-
-            foreach ($cart as $id => $details) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $id,
-                    'quantity' => $details['quantity'],
-                    'price' => $details['price'],
-                ]);
-            }
-
-            DB::commit();
-            session()->forget('cart');
-
-            return redirect()->route('orders.show', $order)->with('success', __('Order placed successfully!'));
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', __('Something went wrong: ') . $e->getMessage());
-        }
     }
 
     public function show(Order $order)
@@ -68,7 +26,93 @@ class OrderController extends Controller
         if ($order->user_id !== Auth::id()) {
             abort(403);
         }
+
         $order->load('items.product');
+
         return view('orders.show', compact('order'));
+    }
+
+    public function checkout()
+    {
+        $cart = Session::get('cart', []);
+        
+        if (empty($cart)) {
+            return redirect()->route('cart.index')->with('error', 'السلة فارغة');
+        }
+
+        $items = [];
+        $total = 0;
+
+        foreach ($cart as $productId => $quantity) {
+            $product = Product::find($productId);
+            if ($product && $product->is_available) {
+                $items[] = [
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'subtotal' => $product->price * $quantity,
+                ];
+                $total += $product->price * $quantity;
+            }
+        }
+
+        if (empty($items)) {
+            return redirect()->route('cart.index')->with('error', 'لا توجد منتجات متاحة');
+        }
+
+        return view('orders.checkout', compact('items', 'total'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'address' => 'required|string|min:10',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $cart = Session::get('cart', []);
+        
+        if (empty($cart)) {
+            return redirect()->route('cart.index')->with('error', 'السلة فارغة');
+        }
+
+        $items = [];
+        $total = 0;
+
+        foreach ($cart as $productId => $quantity) {
+            $product = Product::find($productId);
+            if ($product && $product->is_available) {
+                $items[] = [
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'price' => $product->price,
+                ];
+                $total += $product->price * $quantity;
+            }
+        }
+
+        if (empty($items)) {
+            return redirect()->route('cart.index')->with('error', 'لا توجد منتجات متاحة');
+        }
+
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'total' => $total,
+            'status' => 'pending',
+            'address' => $request->address,
+            'notes' => $request->notes,
+        ]);
+
+        foreach ($items as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item['product']->id,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ]);
+        }
+
+        Session::forget('cart');
+
+        return redirect()->route('orders.show', $order)->with('success', 'تم إنشاء الطلب بنجاح');
     }
 }

@@ -34,21 +34,6 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(Review::class);
-    }
-
-    public function wishlists(): HasMany
-    {
-        return $this->hasMany(Wishlist::class);
-    }
-
-    public function getAverageRatingAttribute()
-    {
-        return $this->reviews()->avg('rating') ?: 5;
-    }
-
     public function getDisplayNameAttribute()
     {
         return app()->getLocale() === 'ar' ? $this->name_ar : $this->name;
@@ -57,5 +42,25 @@ class Product extends Model
     public function getDisplayDescriptionAttribute()
     {
         return app()->getLocale() === 'ar' ? $this->description_ar : $this->description;
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class)->where('is_approved', true);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return round($this->reviews()->avg('rating') ?? 0, 1);
+    }
+
+    public function getReviewsCountAttribute()
+    {
+        return $this->reviews()->count();
     }
 }
