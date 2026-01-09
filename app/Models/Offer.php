@@ -27,6 +27,15 @@ class Offer extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        if (!$this->image) {
+            return null;
+        }
+        
+        // If it's already a full URL (from Cloudinary or elsewhere)
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($this->image);
     }
 }

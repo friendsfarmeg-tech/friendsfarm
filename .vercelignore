@@ -1,0 +1,16 @@
+.env
+/node_modules
+/vendor
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/testing
+/storage/framework/views
+/storage/logs
+**/*.log
+.git
+.gitattributes
+.github
+.idea
+.vscode
+tests
+phpunit.xml
