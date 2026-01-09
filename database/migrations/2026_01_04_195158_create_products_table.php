@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('image_url')->nullable();
             $table->integer('stock')->default(0);
             $table->boolean('is_available')->default(true);
+            $table->boolean('is_featured')->default(false);
             $table->timestamps();
         });
     }

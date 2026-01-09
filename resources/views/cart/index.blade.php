@@ -1,103 +1,92 @@
 @extends('layouts.app')
 
-@section('title', 'السلة')
-
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6">سلة التسوق</h1>
-    
-    @if(count($items) > 0)
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">المنتج</th>
-                        <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">السعر</th>
-                        <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">الكمية</th>
-                        <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">الإجمالي</th>
-                        <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($items as $item)
-                    <tr>
-                        <td class="px-4 py-4">
-                            <div class="flex items-center">
-                                @if($item['product']->image_url)
-                                    <img src="{{ $item['product']->image_url }}" alt="{{ $item['product']->name_ar }}" class="w-16 h-16 object-cover rounded ml-4">
-                                @endif
-                                <div>
-                                    <h3 class="font-semibold text-sm md:text-base">{{ $item['product']->name_ar }}</h3>
-                                    <p class="text-sm text-gray-500">{{ $item['product']->unit }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 text-sm md:text-base">{{ number_format($item['product']->price, 2) }} ج.م</td>
-                        <td class="px-4 py-4">
-                            <form action="{{ route('cart.update', $item['product']) }}" method="POST" class="inline-flex items-center">
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 2rem; color: var(--primary);">{{ __('Shopping Cart') }}</h1>
+
+    @if(session('success'))
+        <div class="alert alert-success" style="background: #d1fae5; color: #065f46; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(empty($items))
+        <div style="text-align: center; padding: 4rem 2rem; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <i data-lucide="shopping-cart" style="width: 4rem; height: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">{{ __('Your cart is empty') }}</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">{{ __('Looks like you haven\'t added any products yet.') }}</p>
+            <a href="{{ route('products.index') }}" class="btn" style="background: var(--primary); color: white; padding: 0.8rem 2rem; border-radius: var(--radius-md); text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="arrow-right" style="width: 1.2rem;"></i>
+                <span>{{ __('Start Shopping') }}</span>
+            </a>
+        </div>
+    @else
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach($items as $item)
+                    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); display: flex; gap: 1.5rem; align-items: center;">
+                        <img src="{{ $item['product']->image_url }}" alt="{{ $item['product']->display_name }}" style="width: 6rem; height: 6rem; object-fit: cover; border-radius: var(--radius-md);">
+                        
+                        <div style="flex: 1;">
+                            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem;">
+                                <a href="{{ route('products.show', $item['product']) }}" style="text-decoration: none; color: var(--text-dark);">
+                                    {{ $item['product']->display_name }}
+                                </a>
+                            </h3>
+                            <p style="color: var(--theme-color); font-weight: 700;">
+                                {{ number_format($item['product']->price, 2) }} {{ __('EGP') }}
+                            </p>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <form action="{{ route('cart.update', $item['product']) }}" method="POST" style="display: flex; align-items: center; gap: 0.5rem;">
                                 @csrf
                                 @method('PUT')
-                                <input type="number" name="quantity" value="{{ $item['quantity'] }}" min="1" max="{{ $item['product']->stock }}" onchange="this.form.submit()" class="border border-gray-300 rounded-lg px-2 py-1 w-16 text-center">
+                                <input type="number" name="quantity" value="{{ $item['quantity'] }}" min="1" style="width: 4rem; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center; font-weight: 700;">
+                                <button type="submit" style="background: transparent; border: none; color: var(--primary); cursor: pointer;" title="{{ __('Update') }}">
+                                    <i data-lucide="refresh-cw" style="width: 1.2rem;"></i>
+                                </button>
                             </form>
-                        </td>
-                        <td class="px-4 py-4 font-semibold text-sm md:text-base">{{ number_format($item['subtotal'], 2) }} ج.م</td>
-                        <td class="px-4 py-4">
+
                             <form action="{{ route('cart.remove', $item['product']) }}" method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
+                                <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer;" title="{{ __('Remove') }}">
+                                    <i data-lucide="trash-2" style="width: 1.2rem;"></i>
                                 </button>
                             </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="border-t bg-gray-50 px-4 py-6">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-lg font-semibold">الإجمالي:</span>
-                <span class="text-2xl font-bold text-green-600">{{ number_format($total, 2) }} ج.م</span>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="{{ route('products.index') }}" class="px-6 py-2 border border-gray-300 rounded-lg text-center hover:bg-gray-100 transition">
-                    متابعة التسوق
+
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); height: fit-content; position: sticky; top: 6rem;">
+                <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">{{ __('Order Summary') }}</h3>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.1rem;">
+                    <span style="color: var(--text-muted);">{{ __('Subtotal') }}</span>
+                    <span style="font-weight: 800;">{{ number_format($total, 2) }} {{ __('EGP') }}</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 2rem; font-size: 1.3rem; font-weight: 900; color: var(--primary);">
+                    <span>{{ __('Total') }}</span>
+                    <span>{{ number_format($total, 2) }} {{ __('EGP') }}</span>
+                </div>
+
+                <a href="{{ route('orders.checkout') }}" class="btn" style="background: var(--primary); color: white; width: 100%; padding: 1rem; border-radius: var(--radius-md); text-decoration: none; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <span>{{ __('Proceed to Checkout') }}</span>
+                    <i data-lucide="arrow-right" style="width: 1.2rem;"></i>
                 </a>
-                <form action="{{ route('cart.clear') }}" method="POST" class="flex-1 sm:flex-none">
+
+                <form action="{{ route('cart.clear') }}" method="POST" style="margin-top: 1rem;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="w-full px-6 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition">
-                        تفريغ السلة
+                    <button type="submit" style="background: transparent; border: none; color: var(--text-muted); width: 100%; text-align: center; cursor: pointer; text-decoration: underline; font-size: 0.9rem;">
+                        {{ __('Clear Cart') }}
                     </button>
                 </form>
-                @auth
-                <a href="{{ route('orders.checkout') }}" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition text-center">
-                    إتمام الطلب
-                </a>
-                @else
-                <a href="{{ route('login') }}" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition text-center">
-                    تسجيل الدخول لإتمام الطلب
-                </a>
-                @endauth
             </div>
         </div>
-    </div>
-    @else
-    <div class="bg-white rounded-lg shadow-md p-8 md:p-12 text-center">
-        <svg class="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <h2 class="text-xl font-semibold mb-2">السلة فارغة</h2>
-        <p class="text-gray-600 mb-6">لم تضف أي منتجات إلى السلة بعد</p>
-        <a href="{{ route('products.index') }}" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-            تصفح المنتجات
-        </a>
-    </div>
     @endif
 </div>
 @endsection

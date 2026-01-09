@@ -7,10 +7,16 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $orders = Order::where('user_id', Auth::id())
@@ -19,6 +25,102 @@ class OrderController extends Controller
             ->paginate(10);
 
         return view('orders.index', compact('orders'));
+    }
+
+    public function checkout()
+    {
+        $cart = Session::get('cart', []);
+
+        if (empty($cart)) {
+            return redirect()->route('products.index')->with('error', 'السلة فارغة');
+        }
+
+        $total = 0;
+        $items = [];
+
+        foreach ($cart as $id => $quantity) {
+            $product = Product::find($id);
+            if ($product && $product->is_available) {
+                $total += $product->price * $quantity;
+                $items[] = [
+                    'product' => $product,
+                    'quantity' => $quantity
+                ];
+            }
+        }
+
+        if (empty($items)) {
+            return redirect()->route('products.index')->with('error', 'المنتجات في السلة غير متوفرة حالياً');
+        }
+
+        return view('orders.checkout', compact('items', 'total'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $cart = Session::get('cart', []);
+
+        if (empty($cart)) {
+            return redirect()->route('products.index')->with('error', 'السلة فارغة');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $total = 0;
+            $orderItems = [];
+
+            foreach ($cart as $id => $quantity) {
+                $product = Product::find($id);
+                if ($product && $product->is_available) {
+                    $price = $product->price;
+                    $total += $price * $quantity;
+                    
+                    $orderItems[] = [
+                        'product_id' => $product->id,
+                        'quantity' => $quantity,
+                        'price' => $price,
+                    ];
+                }
+            }
+
+            if (empty($orderItems)) {
+                throw new \Exception('No available products found in cart');
+            }
+
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'total' => $total,
+                'status' => 'pending', 
+                'address' => $request->address,
+                'notes' => $request->notes,
+            ]);
+
+            foreach ($orderItems as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ]);
+            }
+
+            DB::commit();
+
+            Session::forget('cart');
+
+            return redirect()->route('orders.show', $order)->with('success', 'تم طلبك بنجاح!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'حدث خطأ أثناء تنفيذ الطلب: ' . $e->getMessage());
+        }
     }
 
     public function show(Order $order)
@@ -30,97 +132,5 @@ class OrderController extends Controller
         $order->load('items.product');
 
         return view('orders.show', compact('order'));
-    }
-
-    public function checkout()
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول لإتمام الطلب');
-        }
-        
-        $cart = Session::get('cart', []);
-        
-        if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'السلة فارغة');
-        }
-
-        $items = [];
-        $total = 0;
-
-        foreach ($cart as $productId => $quantity) {
-            $product = Product::find($productId);
-            if ($product && $product->is_available) {
-                $items[] = [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'subtotal' => $product->price * $quantity,
-                ];
-                $total += $product->price * $quantity;
-            }
-        }
-
-        if (empty($items)) {
-            return redirect()->route('cart.index')->with('error', 'لا توجد منتجات متاحة');
-        }
-
-        return view('orders.checkout', compact('items', 'total'));
-    }
-
-    public function store(Request $request)
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول لإتمام الطلب');
-        }
-        
-        $request->validate([
-            'address' => 'required|string|min:10',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        $cart = Session::get('cart', []);
-        
-        if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'السلة فارغة');
-        }
-
-        $items = [];
-        $total = 0;
-
-        foreach ($cart as $productId => $quantity) {
-            $product = Product::find($productId);
-            if ($product && $product->is_available) {
-                $items[] = [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'price' => $product->price,
-                ];
-                $total += $product->price * $quantity;
-            }
-        }
-
-        if (empty($items)) {
-            return redirect()->route('cart.index')->with('error', 'لا توجد منتجات متاحة');
-        }
-
-        $order = Order::create([
-            'user_id' => Auth::id(),
-            'total' => $total,
-            'status' => 'pending',
-            'address' => $request->address,
-            'notes' => $request->notes,
-        ]);
-
-        foreach ($items as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item['product']->id,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-            ]);
-        }
-
-        Session::forget('cart');
-
-        return redirect()->route('orders.show', $order)->with('success', 'تم إنشاء الطلب بنجاح');
     }
 }

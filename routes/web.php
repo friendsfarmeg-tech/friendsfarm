@@ -55,10 +55,7 @@ Route::middleware('auth')->delete('/reviews/{review}', [ReviewController::class,
 // Orders routes (require auth)
 Route::middleware('auth')->prefix('orders')->name('orders.')->group(function () {
     Route::get('/', [OrderController::class, 'index'])->name('index');
+    Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+    Route::post('/', [OrderController::class, 'store'])->name('store');
     Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::get('/orders/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
-    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 });

@@ -1,64 +1,91 @@
 @extends('layouts.app')
 
-@section('title', 'إتمام الطلب')
-
 @section('content')
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6">إتمام الطلب</h1>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Order Form -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
-                <h2 class="text-xl font-bold mb-4">معلومات الطلب</h2>
-                <form action="{{ route('orders.store') }}" method="POST">
-                    @csrf
-                    
-                    <div class="mb-4">
-                        <label for="address" class="block mb-2 font-semibold">العنوان *</label>
-                        <textarea name="address" id="address" rows="4" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="اكتب عنوانك الكامل"></textarea>
-                        @error('address')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="notes" class="block mb-2 font-semibold">ملاحظات (اختياري)</label>
-                        <textarea name="notes" id="notes" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="ملاحظات إضافية للطلب"></textarea>
-                    </div>
-                    
-                    <button type="submit" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-                        تأكيد الطلب
-                    </button>
-                </form>
-            </div>
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 2rem; color: var(--primary);">{{ __('Checkout') }}</h1>
+
+    @if(session('error'))
+        <div class="alert alert-danger" style="background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            {{ session('error') }}
         </div>
+    @endif
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
         
-        <!-- Order Summary -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-4 md:p-6 sticky top-20">
-                <h2 class="text-xl font-bold mb-4">ملخص الطلب</h2>
+        <!-- Checkout Form -->
+        <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="map-pin" style="color: var(--primary);"></i>
+                {{ __('Delivery Details') }}
+            </h2>
+
+            <form action="{{ route('orders.store') }}" method="POST" id="checkout-form">
+                @csrf
                 
-                <div class="space-y-3 mb-6">
-                    @foreach($items as $item)
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <div class="flex-1">
-                            <p class="font-semibold text-sm">{{ $item['product']->name_ar }}</p>
-                            <p class="text-sm text-gray-600">× {{ $item['quantity'] }}</p>
-                        </div>
-                        <span class="text-sm font-semibold">{{ number_format($item['subtotal'], 2) }} ج.م</span>
-                    </div>
-                    @endforeach
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="address" style="display: block; font-weight: 700; margin-bottom: 0.5rem;">{{ __('Delivery Address') }}</label>
+                    <textarea name="address" id="address" rows="3" required
+                        style="width: 100%; padding: 0.8rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-beige); font-size: 1rem;"
+                        placeholder="{{ __('Enter your detailed address here...') }}">{{ old('address', auth()->user()->address ?? '') }}</textarea>
                 </div>
-                
-                <div class="border-t pt-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-lg font-semibold">الإجمالي:</span>
-                        <span class="text-2xl font-bold text-green-600">{{ number_format($total, 2) }} ج.م</span>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="phone" style="display: block; font-weight: 700; margin-bottom: 0.5rem;">{{ __('Phone Number') }}</label>
+                    <input type="text" name="phone" id="phone" required
+                        style="width: 100%; padding: 0.8rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-beige); font-size: 1rem;"
+                        value="{{ old('phone', auth()->user()->phone ?? '') }}" placeholder="01xxxxxxxxx">
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <label for="notes" style="display: block; font-weight: 700; margin-bottom: 0.5rem;">{{ __('Delivery Notes (Optional)') }}</label>
+                    <textarea name="notes" id="notes" rows="2"
+                        style="width: 100%; padding: 0.8rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-beige); font-size: 1rem;"
+                        placeholder="{{ __('Any special instructions?') }}">{{ old('notes') }}</textarea>
+                </div>
+
+                <button type="submit" class="btn" style="background: var(--primary); color: white; width: 100%; padding: 1rem; border-radius: var(--radius-md); text-decoration: none; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.1rem; border: none; cursor: pointer;">
+                    <span>{{ __('Place Order') }}</span>
+                    <i data-lucide="check-circle" style="width: 1.2rem;"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); height: fit-content; position: sticky; top: 6rem;">
+            <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">{{ __('Order Application') }}</h3>
+            
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                @foreach($items as $item)
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <img src="{{ $item['product']->image_url }}" alt="" style="width: 3rem; height: 3rem; object-fit: cover; border-radius: var(--radius-sm);">
+                        <div style="flex: 1; font-size: 0.9rem;">
+                            <div style="font-weight: 700;">{{ $item['product']->display_name }}</div>
+                            <div style="color: var(--text-muted);">x {{ $item['quantity'] }}</div>
+                        </div>
+                        <div style="font-weight: 700;">
+                            {{ number_format($item['product']->price * $item['quantity'], 2) }}
+                        </div>
                     </div>
+                @endforeach
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text-muted);">
+                    <span>{{ __('Subtotal') }}</span>
+                    <span>{{ number_format($total, 2) }} {{ __('EGP') }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.4rem; font-weight: 900; color: var(--primary); margin-top: 1rem;">
+                    <span>{{ __('Total') }}</span>
+                    <span>{{ number_format($total, 2) }} {{ __('EGP') }}</span>
                 </div>
             </div>
+            
+            <div style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                <i data-lucide="shield-check" style="width: 1rem;"></i>
+                <span>{{ __('Secure Payment & Delivery') }}</span>
+            </div>
         </div>
+
     </div>
 </div>
 @endsection

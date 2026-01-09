@@ -26,6 +26,11 @@ class Review extends Model
         'is_admin_added' => 'boolean',
     ];
 
+    public function getDisplayNameAttribute()
+    {
+        return $this->customer_name ?? $this->user->name ?? 'Anonymous';
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);
