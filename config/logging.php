@@ -51,6 +51,14 @@ return [
     */
 
     'channels' => [
+        'stderr' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'debug'),
+            'handler' => Monolog\Handler\StreamHandler::class,
+            'with' => [
+                'stream' => 'php://stderr',
+            ],
+        ],
 
         'stack' => [
             'driver' => 'stack',
@@ -60,14 +68,18 @@ return [
 
         'single' => [
             'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => env('APP_ENV') === 'production' 
+                ? '/tmp/laravel.log' 
+                : storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => env('APP_ENV') === 'production' 
+                ? '/tmp/laravel.log' 
+                : storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -94,16 +106,7 @@ return [
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
-        'stderr' => [
-            'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
-            'handler' => StreamHandler::class,
-            'handler_with' => [
-                'stream' => 'php://stderr',
-            ],
-            'formatter' => env('LOG_STDERR_FORMATTER'),
-            'processors' => [PsrLogMessageProcessor::class],
-        ],
+
 
         'syslog' => [
             'driver' => 'syslog',
