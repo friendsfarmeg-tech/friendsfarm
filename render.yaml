@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: friendsfarm
+    env: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        fromContext: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromContext: true
+      - key: DB_PORT
+        value: "6543"
+      - key: DB_DATABASE
+        fromContext: true
+      - key: DB_USERNAME
+        fromContext: true
+      - key: DB_PASSWORD
+        fromContext: true
+      - key: DB_SSLMODE
+        value: require
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_DRIVER
+        value: array
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: CLOUDINARY_URL
+        fromContext: true

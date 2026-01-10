@@ -23,8 +23,10 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Auth routes
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
-Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::get('/ping', function () {
+    return 'Pong';
+});
+
 
 // Products routes
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
