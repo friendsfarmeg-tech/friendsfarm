@@ -11,19 +11,19 @@ services:
       - key: APP_DEBUG
         value: "false"
       - key: APP_KEY
-        fromContext: true
+        sync: false
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromContext: true
+        sync: false
       - key: DB_PORT
         value: "6543"
       - key: DB_DATABASE
-        fromContext: true
+        sync: false
       - key: DB_USERNAME
-        fromContext: true
+        sync: false
       - key: DB_PASSWORD
-        fromContext: true
+        sync: false
       - key: DB_SSLMODE
         value: require
       - key: SESSION_DRIVER
@@ -33,4 +33,4 @@ services:
       - key: LOG_CHANNEL
         value: stderr
       - key: CLOUDINARY_URL
-        fromContext: true
+        sync: false
